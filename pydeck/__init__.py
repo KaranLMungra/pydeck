@@ -64,21 +64,30 @@ def Tests(expected_results: list, args: list):
 
 class PyDeck:
     def __init__(self) -> None:
-        self.tests = []
+        self.tests = {}
     def test(self):
-        for f, expected_result, kwargs in self.tests:
-            s = time.time()
-            result = f(**kwargs)
-            if not result == expected_result:
-                print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                    f'{f.__qualname__}({kwargs}) {result} == {expected_result} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
-                raise AssertionError
-            else:
-                print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                f'{f.__qualname__}({kwargs}) {result} == {expected_result} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
+        for func_name in self.tests.keys():
+            f = self.tests[func_name]['fn']
+            tests = self.tests[func_name]['tests']
+            for expected_result, kwargs in tests:
+                s = time.time()
+                result = f(**kwargs)
+                if not result == expected_result:
+                    print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
+                    f'{func_name}({kwargs}) {result} == {expected_result} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
+                    raise AssertionError
+                else:
+                    print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
+                    f'{func_name}({kwargs}) {result} == {expected_result} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
  
     def add(self, f, expected_result, kwargs):
-        self.tests += [(f, expected_result, kwargs)]
+        if f.__qualname__ not in self.tests:
+            self.tests[f.__qualname__] = {
+                'fn': f,
+                'tests': []
+            }
+
+        self.tests[f.__qualname__]['tests'].append((expected_result, kwargs))
 
 def PyDeckTest(deck: PyDeck, expected_result, **kwargs):
     def decorate(f):

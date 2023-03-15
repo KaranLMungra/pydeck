@@ -24,6 +24,7 @@ def test_sqaure(x):
 
 deck = PyDeck()
 
+@PyDeckTest(deck, 'World', msg='World')
 @PyDeckTest(deck, 'Hello', msg='Hello')
 def hello(msg: str) -> str:
     return msg
