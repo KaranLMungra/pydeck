@@ -1,4 +1,4 @@
-from pydeck import Test, Tests
+from pydeck import Test, Tests, PyDeck, PyDeckTest
 
 class Person:
     def __init__(self, name, age) -> None:
@@ -22,4 +22,10 @@ def square(x: int) -> int:
 def test_sqaure(x):
     return square(x)
 
+deck = PyDeck()
 
+@PyDeckTest(deck, 'Hello', msg='Hello')
+def hello(msg: str) -> str:
+    return msg
+
+deck.test()
