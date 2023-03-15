@@ -2,24 +2,31 @@ from colored import fg, attr
 import time
 import tqdm
 
+COLOR_PASSED = fg(40)
+COLOR_TEXT = fg(227)
+COLOR_FAILED = fg(160)
+
+def __check_arg_types(f, expected_result, kwargs: dict):
+    for key in f.__annotations__.keys():
+        if key == 'return':
+            if not f.__annotations__[key] == type(expected_result):
+                raise TypeError
+            continue
+        if not f.__annotations__[key] == type(kwargs[key]):
+            raise TypeError
+
 def Test(expected_result, **kwargs):
     def decorator(f):
         s = time.time()
-        for key in f.__annotations__.keys():
-            if key == 'return':
-                if not f.__annotations__[key] == type(expected_result):
-                    raise TypeError
-                continue
-            if not f.__annotations__[key] == type(kwargs[key]):
-                raise TypeError
+        __check_arg_types(f, expected_result, kwargs) 
         result = f(**kwargs)
         if not result == expected_result:
-            print(f'{fg(227)}{attr("bold")}Test{attr(0)} '
-                  f'{f.__qualname__}({kwargs}) {result} == {expected_result} {fg(160)}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
+            print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
+                  f'{f.__qualname__}({kwargs}) {result} == {expected_result} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
             raise AssertionError
         else:
-            print(f'{fg(227)}{attr("bold")}Test{attr(0)} '
-                  f'{f.__qualname__}({kwargs}) {result} == {expected_result} {fg(40)}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
+            print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
+                  f'{f.__qualname__}({kwargs}) {result} == {expected_result} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
         return f
     return decorator
 
@@ -29,33 +36,25 @@ def Tests(expected_results: list, args: list):
         total = 0.0
         test_failed = -1
         for i in tqdm.tqdm(range(len(expected_results))):
-            expected_result = expected_results[i]
-            kwargs = args[i]
             s = time.time()
-            for key in f.__annotations__.keys():
-                if key == 'return':
-                    if not f.__annotations__[key] == type(expected_result):
-                        raise TypeError
-                    continue
-                if not f.__annotations__[key] == type(kwargs[key]):
-                    raise TypeError
-            result = f(**kwargs)
+            __check_arg_types(f, expected_results[i], args[i]) 
+            result = f(**args[i])
             e = time.time()
             total += (e - s)
-            if not result == expected_result:
+            if not result == expected_results[i]:
                 test_failed = i
                 break
                 
         expected_result = expected_results[i]
         kwargs = args[i]
-        result = f(**kwargs)
+        result = f(**args[i])
         if test_failed != -1:
-            print(f'{fg(227)}{attr("bold")}Test{attr(0)} '
-                    f'{f.__qualname__}({kwargs}) {result} == {expected_result} {fg(160)}Failed{attr(0)}!', end='\n\n')
+            print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
+                    f'{f.__qualname__}({args[i]}) {result} == {expected_result} {COLOR_FAILED}Failed{attr(0)}!', end='\n\n')
             raise AssertionError
         else:
-            print(f'{fg(227)}{attr("bold")}All Test of{attr(0)} '
-                    f'{f.__qualname__} {fg(160)}Passed{attr(0)} in {total}!', end='\n\n')
+            print(f'{COLOR_TEXT}{attr("bold")}All Test of{attr(0)} '
+                    f'{f.__qualname__} {COLOR_PASSED}Passed{attr(0)} in {total}!', end='\n\n')
         return f
     return decorator
 
