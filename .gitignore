@@ -1,0 +1,3 @@
+./dist/*
+./pydeck.egg-info/*
+./pydeck/__pycache__/*
