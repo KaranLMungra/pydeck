@@ -19,26 +19,27 @@ def __check_arg_types(f, expected_result, kwargs: dict):
         if not f.__annotations__[key] == type(kwargs[key]):
             raise TypeError
 
-def Test(expected_result, **kwargs):
-    def decorator(f):
-        s = time.time()
-        __check_arg_types(f, expected_result, kwargs) 
-        result = f(**kwargs)
-        if not result == expected_result:
-            print(f'{__COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                  f'{f.__qualname__}({kwargs}) {result} == {expected_result} {__COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
-            raise AssertionError
-        else:
-            print(f'{__COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                  f'{f.__qualname__}({kwargs}) {result} == {expected_result} {__COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
-        return f
-    return decorator
-
-def Tests(expected_results: list, args: list):
+def Test(expected_results: list, args: list):
     assert len(expected_results) == len(args)
+    assert len(expected_results) > 0
     def decorator(f):
         total = 0.0
         test_failed = -1
+        if len(expected_results) == 1:
+            s = time.time()
+            __check_arg_types(f, expected_results[0], args[0])
+            result = f(**args[0])
+            e = time.time()
+            total += (e-s)
+            if not result == expected_results[0]:
+                print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
+                f'{f.__qualname__}({args[0]}) {result} == {expected_results[0]} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
+                raise AssertionError
+            else:
+                print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
+                f'{f.__qualname__}({args[0]}) {result} == {expected_results[0]} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
+            return f
+
         for i in tqdm.tqdm(range(len(expected_results))):
             s = time.time()
             __check_arg_types(f, expected_results[i], args[i]) 
@@ -69,7 +70,7 @@ class PyDeck:
         for func_name in self.tests.keys():
             f = self.tests[func_name]['fn']
             tests = self.tests[func_name]['tests']
-            for expected_result, kwargs in tests:
+            for expected_result, kwargs in tqdm.tqdm(tests):
                 s = time.time()
                 result = f(**kwargs)
                 if not result == expected_result:
