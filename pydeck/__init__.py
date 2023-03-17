@@ -41,29 +41,25 @@ def Test(expected_results: list, args: list):
                 print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
                       f'{f.__qualname__}({args[0]}) {result} == {expected_results[0]} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
             return f
-        t = tqdm.tqdm(total=len(expected_results))
-        i = 0
-        while i < len(expected_results):
+        test_failed = -1
+        for i in tqdm.trange(len(expected_results)):
             s = time.time()
             __check_arg_types(f, expected_results[i], args[i])
             result = f(**args[i])
             e = time.time()
             total += (e - s)
             if not result == expected_results[i]:
+                test_failed = i
                 break
-            i += 1
-            t.display(f'Test {i}/{len(expected_results)}'
-                      '{__COLOR_PASSED}Passed!{attr(0)}', abs(t.pos))
-            t.update(i)
-        t.close()
-        if i < len(expected_results):
-            result = f(**args[i])
+        if test_failed != -1:
+            result = f(**args[test_failed])
             print(f'{__COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                  f'{f.__qualname__}({args[i]}) {result} == {expected_results[i]} {__COLOR_FAILED}Failed{attr(0)}!', end='\n\n')
+                  f'{f.__qualname__}({args[test_failed]}) {result} =='
+                  f'{expected_results[test_failed]} {__COLOR_FAILED}Failed{attr(0)}!', end='\n\n')
             raise AssertionError
         else:
             print(f'{__COLOR_TEXT}{attr("bold")}All Test of{attr(0)} '
-                  f'{f.__qualname__} {__COLOR_PASSED}Passed{attr(0)} in {total}!', end='\n\n')
+                  f'{f.__qualname__}({args[0]}...) {__COLOR_PASSED}Passed{attr(0)} in {total}!', end='\n\n')
         return f
     return decorator
 
