@@ -10,6 +10,7 @@ COLOR_PASSED = fg(40)
 COLOR_TEXT = fg(227)
 COLOR_FAILED = fg(160)
 
+
 def __check_arg_types(f, expected_result, kwargs: dict):
     for key in f.__annotations__.keys():
         if key == 'return':
@@ -19,12 +20,13 @@ def __check_arg_types(f, expected_result, kwargs: dict):
         if not f.__annotations__[key] == type(kwargs[key]):
             raise TypeError
 
+
 def Test(expected_results: list, args: list):
     assert len(expected_results) == len(args)
     assert len(expected_results) > 0
+
     def decorator(f):
         total = 0.0
-        test_failed = -1
         if len(expected_results) == 1:
             s = time.time()
             __check_arg_types(f, expected_results[0], args[0])
@@ -33,39 +35,43 @@ def Test(expected_results: list, args: list):
             total += (e-s)
             if not result == expected_results[0]:
                 print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                f'{f.__qualname__}({args[0]}) {result} == {expected_results[0]} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
+                      f'{f.__qualname__}({args[0]}) {result} == {expected_results[0]} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
                 raise AssertionError
             else:
                 print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                f'{f.__qualname__}({args[0]}) {result} == {expected_results[0]} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
+                      f'{f.__qualname__}({args[0]}) {result} == {expected_results[0]} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
             return f
-
-        for i in tqdm.tqdm(range(len(expected_results))):
+        t = tqdm.tqdm(total=len(expected_results))
+        i = 0
+        while i < len(expected_results):
             s = time.time()
-            __check_arg_types(f, expected_results[i], args[i]) 
+            __check_arg_types(f, expected_results[i], args[i])
             result = f(**args[i])
             e = time.time()
             total += (e - s)
             if not result == expected_results[i]:
-                test_failed = i
                 break
-                
-        expected_result = expected_results[i]
-        kwargs = args[i]
-        result = f(**args[i])
-        if test_failed != -1:
+            i += 1
+            t.display(f'Test {i}/{len(expected_results)}'
+                      '{__COLOR_PASSED}Passed!{attr(0)}', abs(t.pos))
+            t.update(i)
+        t.close()
+        if i < len(expected_results):
+            result = f(**args[i])
             print(f'{__COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                    f'{f.__qualname__}({args[i]}) {result} == {expected_result} {__COLOR_FAILED}Failed{attr(0)}!', end='\n\n')
+                  f'{f.__qualname__}({args[i]}) {result} == {expected_results[i]} {__COLOR_FAILED}Failed{attr(0)}!', end='\n\n')
             raise AssertionError
         else:
             print(f'{__COLOR_TEXT}{attr("bold")}All Test of{attr(0)} '
-                    f'{f.__qualname__} {__COLOR_PASSED}Passed{attr(0)} in {total}!', end='\n\n')
+                  f'{f.__qualname__} {__COLOR_PASSED}Passed{attr(0)} in {total}!', end='\n\n')
         return f
     return decorator
+
 
 class PyDeck:
     def __init__(self) -> None:
         self.tests = {}
+
     def test(self):
         for func_name in self.tests.keys():
             f = self.tests[func_name]['fn']
@@ -75,12 +81,12 @@ class PyDeck:
                 result = f(**kwargs)
                 if not result == expected_result:
                     print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                    f'{func_name}({kwargs}) {result} == {expected_result} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
+                          f'{func_name}({kwargs}) {result} == {expected_result} {COLOR_FAILED}Failed{attr(0)} in {time.time() - s}s!', end='\n\n')
                     raise AssertionError
                 else:
                     print(f'{COLOR_TEXT}{attr("bold")}Test{attr(0)} '
-                    f'{func_name}({kwargs}) {result} == {expected_result} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
- 
+                          f'{func_name}({kwargs}) {result} == {expected_result} {COLOR_PASSED}Passed{attr(0)} in {time.time()- s}s!', end='\n\n')
+
     def add(self, f, expected_result, kwargs):
         if f.__qualname__ not in self.tests:
             self.tests[f.__qualname__] = {
@@ -89,6 +95,7 @@ class PyDeck:
             }
 
         self.tests[f.__qualname__]['tests'].append((expected_result, kwargs))
+
 
 def PyDeckTest(deck: PyDeck, expected_result, **kwargs):
     def decorate(f):
